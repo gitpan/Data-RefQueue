@@ -22,14 +22,17 @@ package Data::RefQueue;
 
 use 5.006;
 use strict;
-use vars qw($VERSION);
+use vars qw($VERSION $DEBUG);
 
-$VERSION = '0.1';
+$DEBUG = 0;
+
+$VERSION = '0.2';
 
 # ### prototypes
 sub new;		# new RefQueue object.
 sub set;		# set queue values.
-sub pos;		# set position.
+sub setpos;		# set position.
+sub getpos;		# get position.
 sub size;		# return the number of elements in queue.
 sub next;		# set position to next element.
 sub prev;		# set position to previous element.
@@ -41,6 +44,7 @@ sub filled;		# return all filled positions.
 sub delete;		# delete (truncate) current element.
 sub remove;		# remove this element.
 sub cleanse;	# remove all positions not filled.
+sub insert_at;  # find the element that contains 'key' and replace key with value.
 sub not_filled;	# return all positions that isn't filled.
 
 # #### data::refqueue new(string pkg, array values)
@@ -55,6 +59,7 @@ sub new
 	if(scalar @values) {
 		$self->set(@values);
 	}
+	$self->reset;
 	return $self;
 }
 
@@ -64,25 +69,37 @@ sub new
 sub queue
 {
 	my($self) = @_;
-	unless(ref $self->{_QUEUE_} eq 'ARRAY') {
-		$self->{_QUEUE_} = [];
+	unless(ref $self->{QUEUE} eq 'ARRAY') {
+		$self->{QUEUE} = [];
 	}
-	return $self->{_QUEUE_};
+	return $self->{QUEUE};
 }
 
-# #### int pos(data::refqueue q, int pos)
-# Set/Get current queue position.
+# #### int setpos(data::refqueue q, int pos)
+# Set current queue position.
 # XXX: Wraps around if higher/lower than availible elements.
 #
-sub pos
+sub setpos
 {
 	my($self, $pos) = @_;
-	if($pos) {
-		$pos = 0 if $pos > $self->size;
-		$pos = $self->size if $pos < 0;
-		$self->{_POS_} = $pos;
+	my($package, $filename, $line, $subroutine) = caller();
+	if($pos >= 0) {
+		if($pos > $self->size) {
+			$pos = 0;
+		} elsif($pos < 0) {
+			$pos = $self->size;
+		}
+		$self->{POS} = $pos;
 	}
-	return $self->{_POS_};
+}
+
+# #### int getpos(data::refqueue q)
+# Get current queue position.
+#
+sub getpos
+{
+	my($self) = @_;
+	return $self->{POS};
 }
 
 
@@ -91,7 +108,9 @@ sub pos
 #
 sub size
 {
-	return scalar @{$_[0]->queue};
+	my($self) = @_;
+	my $q = $self->queue;
+	return $#$q;
 }
 
 # #### void set(data::refqueue q, array values)
@@ -101,6 +120,7 @@ sub set
 {
 	my($self, @values) = @_;
 	my $q = $self->queue;
+	print STDERR "SET ". join(", ", @values). "\n" if $DEBUG;
 	@$q = @values;
 }
 
@@ -110,7 +130,9 @@ sub set
 sub next
 {
 	my($self) = @_;
-	$self->pos($self->pos + 1);
+	my $pos = $self->getpos() + 1;
+	$pos ||= 1;
+	$self->setpos($pos);
 }
 
 # #### void next(data::refqueue q)
@@ -119,7 +141,9 @@ sub next
 sub prev
 {
 	my($self) = @_;
-	$self->pos($self->pos - 1);
+	my $pos = $self->getpos() - 1;
+	$pos ||= 0;
+	$self->setpos($pos);
 }
 
 # #### void reset(data::refqueue q)
@@ -128,7 +152,7 @@ sub prev
 sub reset
 {
 	my($self) = @_;
-	$self->{_POS_} = 0;
+	$self->{POS} = 0;
 }
 
 # #### void cleanse(data::refqueue q)
@@ -140,9 +164,9 @@ sub cleanse
 	MAIN:
 	while(1) {
 		ELEMENT:
-		for(my $qi; $qi < $self->size; $qi++) {
+		for(my $qi; $qi <= $self->size; $qi++) {
 			unless(ref $q->[$qi]) {
-				$self->remove($self->pos($qi)), goto MAIN;
+				$self->remove($self->setpos($qi)), goto MAIN;
 			}
 		}
 		last MAIN;
@@ -157,7 +181,7 @@ sub not_filled
 	my($self) = @_;
 	my $q = $self->queue;
 	my @ret;
-	for(my $qi = 0; $qi < $self->size; $qi++) {
+	for(my $qi = 0; $qi <= $self->size; $qi++) {
 		unless(ref $q->[$qi]) {
 			push @ret, $q->[$qi];
 		}
@@ -173,7 +197,7 @@ sub filled
 	my($self) = @_;
 	my $q = $self->queue;
 	my @ret;
-	for(my $qi = 0; $qi < $self->size; $qi++) {
+	for(my $qi = 0; $qi <= $self->size; $qi++) {
 		if(ref $q->[$qi]) {
 			push @ret, $q->[$qi];
 		}
@@ -187,7 +211,8 @@ sub filled
 sub fetch
 {
 	my($self) = @_;
-	return $self->queue->[$self->pos];
+	print STDERR "FETCH AT ".$self->getpos(). "\n" if $DEBUG;
+	return $self->queue->[$self->getpos()];
 }
 
 # #### void delete(data::refqueue q)
@@ -196,7 +221,8 @@ sub fetch
 sub delete
 {
 	my($self) = @_;
-	delete $self->queue->[$self->pos];
+	print STDERR "DELETE AT ".$self->getpos(). "\n" if $DEBUG;
+	delete $self->queue->[$self->getpos()];
 }
 
 # #### void save(data::refqueue q, void* value)
@@ -206,8 +232,9 @@ sub delete
 sub save
 {
 	my($self, $value) = @_;
+	print STDERR "SAVE AT ".$self->getpos(). "\n" if $DEBUG;
 	my $q = $self->queue;
-	$q->[$self->pos] = $value;
+	$q->[$self->getpos()] = $value;
 	$self->next;
 }
 
@@ -220,13 +247,35 @@ sub remove
 	my($self) = @_;
 	my $q = $self->queue;
 	my @copy;
-	for(my $qi = 0; $qi < $self->size; $qi++) {
-		unless($qi == $self->pos) {
+	print STDERR "REMOVE AT ".$self->getpos(). "\n" if $DEBUG;
+	for(my $qi = 0; $qi <= $self->size; $qi++) {
+		unless($qi == $self->getpos()) {
 			push(@copy, $q->[$qi]);
 		}
 	}
 	$self->set(@copy);
 }
+
+# ### int insert_at(data::refqueue q, void* key, void* value)
+# Find the element that contains 'key' and replace key with value.
+#
+sub insert_at
+{
+	my($self, $key, $value) = @_;
+	my $orig_pos = $self->getpos();
+	my $q = $self->queue;
+	print STDERR "INSERT AT $key $value\n" if $DEBUG;
+	for(my $qi = 0; $qi <= $self->size; $qi++) {
+		if($q->[$qi] eq $key) {
+			print STDERR "KEY '$key' IS AT ELEMENT NUMBER ;$qi;\n" if $DEBUG;
+			$self->setpos($qi);
+			$self->save($value);
+			$self->setpos($orig_pos);
+			return 1;
+		}
+	}
+	return undef;
+}	
 
 1;
 __END__
@@ -260,7 +309,7 @@ Data::RefQueue - Queue system based on references and scalars.
   $db->query($query);
   while(my $result = $db->fetchrow_hash) {
 	my $objref = build_obj_from_db_result($result);
-    $refq->save($objref);
+    $refq->insert_at($objref->id, $objref);
   }
 
   # ### remove the id's we didn't find.
@@ -302,10 +351,14 @@ $refq->save($value) saves a value into the next availible position. etc.
 
 	The queue itself.
 
-=item int pos(data::refqueue q, int pos)
+=item int setpos(data::refqueue q, int pos)
 
-	Set/Get current queue position.
+	Set current queue position.
 	Wraps around if higher/lower than availible elements.
+
+=item int getpos(data::refqueue q)
+
+	Get current queue position.
 
 =item int size(data::refqueue q)
 
@@ -356,6 +409,10 @@ $refq->save($value) saves a value into the next availible position. etc.
 
 	Remove the current position entirely, decrementing
 	the size of the queue by one.
+
+=item int insert_at(data::refqueue q, void* key, void* value)
+
+	Find the element that contains 'key' and replace key with value.
  
 =back
 
