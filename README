@@ -1,4 +1,4 @@
-Data/RefQueue version 0.1
+Data/RefQueue version 0.3
 ==========================
 
 Data::RefQueue is a Queue system based on references and scalars,
@@ -21,7 +21,7 @@ This module requires these other modules and libraries:
 
 COPYRIGHT AND LICENCE
 
-(c) 2002 - Ask Solem Hoel <ask@unixmonks.net>
+(c) 2002-2007 - Ask Solem <ask@0x61736b.net>
 All rights reserved.
 
 This program is free software; you can redistribute it and/or modify

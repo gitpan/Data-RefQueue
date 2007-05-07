@@ -5,10 +5,11 @@
 
 # change 'tests => 1' to 'tests => last_test_to_print';
 
-use Test;
-BEGIN { plan tests => 1 };
-use Data::RefQueue;
+use Test::More;
+plan( tests => 3 );
+use_ok('Data::Refqueue');
 my $q = new Data::RefQueue;
+ok($q, 'create Data::RefQueue object');
 $q->set(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10);
 ok(1); # If we made it this far, we're ok.
 

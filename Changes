@@ -1,9 +1,9 @@
 Revision history for Perl extension Data::RefQueue.
 
-0.01  Mon May  6 10:32:08 2002
-	- original version; created by h2xs 1.21 with options
-		-XA -n Data::RefQueue
+0.3  Mon May 07 2007
+  Minor changes:
+  Moved tests into t/, added distmeta.
 
-0.1 Mon May 6 13:01:08 2002
-	- initial version
+0.2  Wed Nov 28 2002
+	Initial Release.	
 

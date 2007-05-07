@@ -3,9 +3,9 @@ use ExtUtils::MakeMaker;
 # the contents of the Makefile that is written.
 WriteMakefile(
     'NAME'		=> 'Data::RefQueue',
-    'VERSION_FROM'	=> 'RefQueue.pm', # finds $VERSION
+    'VERSION_FROM'	=> 'lib/Data/RefQueue.pm', # finds $VERSION
     'PREREQ_PM'		=> {}, # e.g., Module::Name => 1.1
     ($] >= 5.005 ?    ## Add these new keywords supported since 5.005
-      (ABSTRACT_FROM => 'RefQueue.pm', # retrieve abstract from module
-       AUTHOR     => 'A. U. Thor <a.u.thor@a.galaxy.far.far.away>') : ()),
+      (ABSTRACT_FROM => 'lib/Data/RefQueue.pm', # retrieve abstract from module
+       AUTHOR     => 'Ask Solem <ASKSH@cpan.org>') : ()),
 );
