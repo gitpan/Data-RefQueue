@@ -31,7 +31,7 @@ use vars qw($VERSION $DEBUG);
 
 $DEBUG = 0;
 
-$VERSION = '0.3';
+$VERSION = '0.4';
 
 # ### prototypes
 sub new;		# new RefQueue object.
